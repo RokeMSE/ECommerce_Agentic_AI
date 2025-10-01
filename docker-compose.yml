@@ -1,19 +1,17 @@
-version: '3.8'
-
 services:
   # API Gateway
   api-gateway:
     image: kong:3.4
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: postgres
-      KONG_PG_DATABASE: kong
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kong
+      KONG_DATABASE: 'off' # Use declarative config instead of DB
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml 
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
     ports:
       - "8000:8000"
-      - "8443:8443"
       - "8001:8001"
+    volumes:
+      - ./kong:/etc/kong
     networks:
       - app-network
 
@@ -39,6 +37,52 @@ services:
               capabilities: [gpu]
     networks:
       - app-network
+    depends_on:
+      - redis
+      - qdrant
+      - elasticsearch
+
+  # Training Service
+  training-service:
+    build: ./backend/training_service
+    image: training-service:latest
+    ports:
+      - "8081:8000"
+    networks:
+      - app-network
+
+  # Scraping Agent
+  scraping-agent:
+    build: ./agents/scraping_agent
+    image: scraping-agent:latest
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "8082:8000"
+    networks:
+      - app-network
+
+  # Synthetic Agent
+  synthetic-agent:
+    build: ./agents/synthetic_agent
+    image: synthetic-agent:latest
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "8083:8000"
+    networks:
+      - app-network
+      
+  # Frontend
+  frontend:
+    build: ./frontend/
+    image: frontend-gradio:latest
+    ports:
+      - "7860:7860"
+    networks:
+      - app-network
+    depends_on:
+      - inference-service
 
   # Redis Cache
   redis:
@@ -74,7 +118,7 @@ services:
     networks:
       - app-network
 
-  # PostgreSQL (for multiple services)
+  # PostgreSQL
   postgres:
     image: postgres:15
     environment:

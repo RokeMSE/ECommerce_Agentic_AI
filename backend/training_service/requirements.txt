@@ -1,0 +1,9 @@
+prefect
+torch
+transformers
+mlflow
+boto3
+scikit-learn
+matplotlib
+seaborn
+pandas

@@ -1,0 +1,9 @@
+_format_version: "3.0"
+
+services:
+  - name: inference-api-service
+    url: http://inference-service:8000  # Points to FastAPI service
+    routes:
+      - name: inference-api-route
+        paths:
+          - /api
