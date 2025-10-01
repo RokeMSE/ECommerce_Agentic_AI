@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+redis
+torch
+ftfy
+regex
+tqdm
+# For CLIP model
+git+https://github.com/openai/CLIP.git

@@ -1,52 +1,100 @@
 version: '3.8'
 
 services:
-  db:
-    image: pgvector/pgvector:pg15
-    container_name: review_db_downscaled
-    restart: always
+  # API Gateway
+  api-gateway:
+    image: kong:3.4
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  api:
-    build:
-      context: ./backend 
-      dockerfile: Dockerfile
-    container_name: review_api_downscaled
-    restart: always
-    depends_on:
-      db:
-        condition: service_healthy
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: postgres
+      KONG_PG_DATABASE: kong
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
     ports:
       - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+    networks:
+      - app-network
+
+  # Inference Service
+  inference-service:
+    build: ./backend/inference_service
+    image: inference-service:latest
+    environment:
+      - MODEL_PATH=/models/sentiment_vlm
+      - REDIS_HOST=redis
+      - QDRANT_HOST=qdrant
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    ports:
+      - "8080:8000"
     volumes:
-      # Code and data directories
-      - ./backend:/app
-      - ./scripts:/app/scripts
-      - ./agents:/app/agents
-      - ./data:/app/data
-      - ./models:/app/models
-    env_file:
-      - .env
-    # GPU support for model inference
+      - ./models:/models
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
               count: 1
-              capabilities: [gpu] # Currently a RTX 5070Ti
+              capabilities: [gpu]
+    networks:
+      - app-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - app-network
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+
+  # PostgreSQL (for multiple services)
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_MULTIPLE_DATABASES=kong,mlflow,app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+    networks:
+      - app-network
 
 volumes:
-  postgres_data:
+  redis-data:
+  qdrant-data:
+  elasticsearch-data:
+  postgres-data:
+
+networks:
+  app-network:
+    driver: bridge
