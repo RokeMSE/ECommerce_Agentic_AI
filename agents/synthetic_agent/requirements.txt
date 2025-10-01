@@ -1,0 +1,7 @@
+torch
+transformers
+diffusers
+anthropic
+Pillow
+numpy
+accelerate

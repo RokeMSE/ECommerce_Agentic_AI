@@ -1,0 +1,7 @@
+playwright
+boto3
+openai
+anthropic
+scrapy
+python-dotenv
+PyYAML

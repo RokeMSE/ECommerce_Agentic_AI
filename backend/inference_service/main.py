@@ -17,10 +17,11 @@ app = FastAPI(title="Multimodal Sentiment Analysis API", version="2.0")
 class ModelManager:
     def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Using device: {self.device}")
+        print(f"Using device: {self.device}")    
         
-        # NOTE: LLaVA is a large model. For local dev, we are replacing it
-        # with a placeholder. In production, you would load the real model.
+        print("Loading VLM model for sentiment analysis...")
+        
+        # NOTE: LLaVA is too large of a model so for local I'm just putting it as a placeholder.
         # self.vlm_model = LlavaForConditionalGeneration.from_pretrained(...)
         # self.vlm_processor = AutoProcessor.from_pretrained(...)
         
@@ -31,15 +32,17 @@ class ModelManager:
         self.cache = Redis(host='redis', port=6379, db=0)
     
     def get_cache_key(self, text: str, image_hash: Optional[str]) -> str:
+        """ 
+        text (str): The text to generate a key for.
+        image_hash (Optional[str]): The hash of the image to generate a key for. 
+        """
         key = f"{text}_{image_hash}" if image_hash else text
-        return hashlib.md5(key.encode()).hexdigest()
+        return hashlib.md5(key.encode()).hexdigest() # A hexadecimal string representing the cache key.
 
     @torch.no_grad()
     def analyze_sentiment(self, text: str, image: Optional[Image.Image] = None) -> Dict[str, Any]:
-        # In a real implementation, this would use a fine-tuned LLaVA model.
-        # Here we use a placeholder that shows the logic.
+        # NOTE: THIS IS ONLY APLALCEHOLDER FOR LLaVA INFERENCE
         print("Analyzing sentiment (placeholder logic)...")
-        # Placeholder logic:
         sentiment = "negative" if "terrible" in text.lower() else "positive"
         return {"sentiment": sentiment, "confidence": 0.9, "modality": "multimodal" if image else "text_only"}
 
