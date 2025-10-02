@@ -129,8 +129,34 @@ appear in it.
     + If the count of negative words is greater, it's classified as "negative".
     + If the counts are equal (or both are zero), the sentiment is "neutral".
 
-## Running the full Agentic Pipelines
-After the infrastructure is running, you can execute the core agentic workflows. These commands should be run from within the respective service containers or configured to run as standalone scripts that connect to the Docker network.
+## What's Not Implemented (Limitations)
+### Full ML Pipeline (Placeholder)
+- Status: Pseudo-code + simplified
+
+1. **LLaVA Model**: Current uses rule-based classifier
+- Reason: 13GB model, requires GPU, long download
+- Production: Needs fine-tuned model artifacts
+
+2. **Training Pipeline**: Structure exists, needs real data
+- Current: Prefect flows defined
+- Missing: Actual training execution, model artifacts
+
+3. **Synthetic Agent**: Code structure only
+- Reason: LLaMA 3.1 + SDXL = 30GB+, requires **minimum** 24GB VRAM
+- Production: Needs really powerful GPU
+
+### Retrieval System (Not Integrated)
+- Status: Code exists, not connected
+- Hybrid Retrieval: Implementation in `hybrid_dense_parse_retrieval_approach.py`
+- Missing: Integration with inference endpoint
+- Reason: Demo focuses on sentiment analysis first
+
+### Automated Labeling (Suggestion Only)
+- Status: Documentation only
+- Reason: Requires paid API calls, demo uses existing label
+
+## Running the full Agentic Pipelines (AFTER ALL IMPLEMENTATION)
+After the **FULL** infrastructure is running, you can execute the core agentic workflows. These commands should be run from within the respective service containers or configured to run as standalone scripts that connect to the Docker network.
 
 ### 1. Data Ingestion
 To start the autonomous scraping process, run the scraping agent. This agent will use its LLM-guided strategy to find and extract reviews.
