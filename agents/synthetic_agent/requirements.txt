@@ -1,7 +1,7 @@
 torch
 transformers
 diffusers
-anthropic
+openai
 Pillow
 numpy
 accelerate

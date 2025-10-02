@@ -5,7 +5,6 @@ import hashlib
 import json
 from dataclasses import dataclass
 from typing import List, Dict, Optional
-
 import boto3
 from dotenv import load_dotenv
 from openai import OpenAI 

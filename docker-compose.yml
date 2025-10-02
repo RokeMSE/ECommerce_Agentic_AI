@@ -3,8 +3,8 @@ services:
   api-gateway:
     image: kong:3.4
     environment:
-      KONG_DATABASE: 'off' # Use declarative config instead of DB
-      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml 
+      KONG_DATABASE: 'off'
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
       KONG_PROXY_LISTEN: 0.0.0.0:8000
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
     ports:
@@ -72,11 +72,13 @@ services:
       - "8083:8000"
     networks:
       - app-network
-      
+
   # Frontend
   frontend:
     build: ./frontend/
     image: frontend-gradio:latest
+    environment:
+      - API_URL=${API_URL}
     ports:
       - "7860:7860"
     networks:
@@ -132,6 +134,42 @@ services:
       - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
     networks:
       - app-network
+
+  # MinIO
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    networks:
+      - app-network
+  
+  # MLflow
+  mlflow:
+    image: python:3.10-slim
+    command: >
+      sh -c "pip install mlflow boto3 psycopg2-binary &&
+             mlflow server --host 0.0.0.0 \
+                           --backend-store-uri postgresql://postgres:postgres@postgres/mlflow \
+                           --default-artifact-root s3://mlflow/"
+    ports:
+      - "5000:5000"
+    environment:
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+      - minio
+
 
 volumes:
   redis-data:

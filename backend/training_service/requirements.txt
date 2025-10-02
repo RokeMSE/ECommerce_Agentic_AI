@@ -1,8 +1,9 @@
-prefect
+prefect # For workflow orchestration
 torch
 transformers
 mlflow
-boto3
+boto3 # For AWS S3 interaction
+minio # For local S3-compatible storage
 scikit-learn
 matplotlib
 seaborn

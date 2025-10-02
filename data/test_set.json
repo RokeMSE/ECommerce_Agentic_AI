@@ -1,0 +1,12 @@
+[
+    {
+        "text": "This is a positive test review.",
+        "image_path": "path/to/image1.jpg",
+        "sentiment": "positive"
+    },
+    {
+        "text": "This is a negative test review.",
+        "image_path": "path/to/image2.jpg",
+        "sentiment": "negative"
+    }
+]
