@@ -21,8 +21,6 @@ ecommerce_agentic_ai/
 ```
 
 ## Overview
-This system is designed to tackle the critical challenge of data scarcity in sentiment analysis. By deploying a set of intelligent, autonomous agents, it creates a self-improving MLOps lifecycle that covers everything from data acquisition to model deployment.
-
 1. **Autonomous Data Acquisition**: An intelligent scraping agent uses an LLM to decide which web sources to target and dynamically discovers how to extract multimodal review data (text and images).
 2. **Advanced Data Synthesis**: A synthesis agent generates high-fidelity, domain-specific text and images, creating large, balanced datasets for training. The quality is ensured through an adversarial validation process.
 3. **Multimodal Understanding**: The system fine-tunes a Vision-Language Model (LLaVA) to jointly understand text and images, capturing nuanced sentiment that unimodal models would miss.
@@ -38,7 +36,7 @@ This system is designed to tackle the critical challenge of data scarcity in sen
 - **Microservices Architecture**: Built with Docker for scalability, maintainability, and easy local setup.
 
 ## System Architecture
-The system is a network of containerized microservices orchestrated by Docker Compose. This design separates concerns, allowing each component to be developed, deployed, and scaled independently.
+The system is a network of containerized microservices orchestrated by Docker Compose. The architechture design separates concerns, allowing each component to be developed, deployed, and scaled independently.
 
 ### Core Services
 - **API Gateway (Kong)**: The single entry point for all API requests, handling routing, and security.
