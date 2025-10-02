@@ -1,6 +1,8 @@
 import gradio as gr
+from PIL import Image
 import requests
 import os
+import io
 
 # Get the API URL from the environment variable set in docker-compose
 API_URL = os.getenv("API_URL", "http://localhost:8000")
@@ -15,10 +17,7 @@ def analyze_review(text, image):
 
     files = {}
     if image is not None:
-        # Gradio provides the image as a numpy array, we need to save it to a byte stream
-        from PIL import Image
-        import io
-
+        # Gradio provides the image as a numpy array -> save it to a byte stream
         pil_image = Image.fromarray(image)
         img_byte_arr = io.BytesIO()
         pil_image.save(img_byte_arr, format='PNG')
@@ -32,17 +31,13 @@ def analyze_review(text, image):
 
         data = response.json()
 
-        # Format the output for display
         output_text = (
             f"Sentiment: {data.get('sentiment', 'N/A')}\n"
             f"Confidence: {data.get('confidence', 0.0):.2f}\n"
             f"Modality: {data.get('modality', 'N/A')}\n"
             f"Processing Time: {data.get('processing_time_ms', 0.0):.0f} ms"
         )
-
-        # You can add logic here to display similar_reviews if the API returns them
-
-        return output_text, None # Second return value is for an output component we are not using
+        return output_text, None # Second return value is for an output component to show raw JSON if needed
 
     except requests.exceptions.RequestException as e:
         return f"Error connecting to the API: {e}", None
