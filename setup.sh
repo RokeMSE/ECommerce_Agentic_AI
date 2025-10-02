@@ -7,9 +7,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}"
-echo "=================================================="
 echo "  E-Commerce Agentic AI System - Setup Script"
-echo "=================================================="
 echo -e "${NC}"
 
 # Function to print status
@@ -55,15 +53,13 @@ mkdir -p models data monitoring/grafana-dashboards scripts kong
 if [ ! -f .env ]; then
     print_warning ".env file not found. Creating from template..."
     cat > .env << 'EOF'
-# API Keys (REQUIRED - Update these!)
-OPENAI_API_KEY=your_openai_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-HUGGINGFACE_TOKEN=your_hf_token_here
+# OpenAI API Key (ADD YOURS)
+OPENAI_API_KEY=""
 
 # AWS/MinIO Configuration
-AWS_ACCESS_KEY_ID=minioadmin
+AWS_ACCESS_KEY_ID=minioadmin # Will be replaced in production with real AWS credentials
 AWS_SECRET_ACCESS_KEY=minioadmin
-AWS_REGION=us-east-1
+AWS_REGION=""
 S3_ENDPOINT_URL=http://minio:9000
 S3_BUCKET_NAME=multimodal-reviews-raw
 
@@ -71,14 +67,46 @@ S3_BUCKET_NAME=multimodal-reviews-raw
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=mlflow
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
 
 # Redis Configuration
 REDIS_HOST=redis
 REDIS_PORT=6379
 
+# Qdrant Configuration
+QDRANT_HOST=qdrant
+QDRANT_PORT=6333
+
+# Elasticsearch Configuration
+ELASTICSEARCH_URL=http://elasticsearch:9200
+ELASTICSEARCH_USER=elastic
+ELASTICSEARCH_PASSWORD=changeme
+
+# MLflow Configuration
+MLFLOW_TRACKING_URI=http://mlflow:5000
+MLFLOW_BACKEND_STORE_URI=postgresql://postgres:postgres@postgres:5432/mlflow
+MLFLOW_ARTIFACT_ROOT=s3://mlflow-artifacts/
+
+# Model Configuration
+MODEL_VERSION=v1.0
+MODEL_PATH=/models/sentiment_vlm
+
+# API Configuration
+API_URL=http://api-gateway:8000
+INFERENCE_SERVICE_URL=http://inference-service:8000
+
+# Prefect Configuration
+PREFECT_API_URL=http://prefect-server:4200/api
+
+# Monitoring
+PROMETHEUS_URL=http://prometheus:9090
+GRAFANA_URL=http://grafana:3000
+GRAFANA_ADMIN_PASSWORD=admin
+
 # Application Settings
 LOG_LEVEL=INFO
 ENVIRONMENT=development
+MAX_WORKERS=4 # Number of parallel workers for inference
 EOF
     print_warning "Please edit .env file and add your API keys!"
     print_warning "Run: nano .env (or use your preferred editor)"
