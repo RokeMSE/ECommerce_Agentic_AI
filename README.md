@@ -115,6 +115,31 @@ Once the containers are running, you can access the various components:
     docker-compose down
     ```
 
+## Deployment Options
+### Option A: Demo
+- Services: 8 essential services only.
+- Includes:
+    - API Gateway (Kong)
+    - Inference Service
+    - Frontend (Gradio)
+    - Databases (PostgreSQL, Redis, Qdrant, Elasticsearch)
+    - Storage (MinIO)
+- Excludes:
+    - Training Service (not needed for inference)
+    - Agents (not needed for basic demo)
+    - Monitoring (optional for demo)
+
+### Option B: Full System
+- Services: All 13 services.
+- Additional services:
+    + Scraping Agent
+    + Synthetic Agent
+    + Training Service
+    + MLflow
+    + Prometheus
+    + Grafana
+    + Prefect
+
 ## Demo run:
 This is explicitly designed as a placeholder for the full, fine-tuned LLaVA model, which is too resource-intensive for a standard local deployment. 
 
