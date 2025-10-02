@@ -157,47 +157,13 @@ if [ ! -f kong/kong.yml ]; then
 _format_version: "3.0"
 
 services:
-  - name: inference-service
-    url: http://inference-service:8000
-    protocol: http
-    connect_timeout: 60000
-    write_timeout: 60000
-    read_timeout: 60000
-
-routes:
-  - name: analyze-route
-    service: inference-service
-    paths:
-      - /api/analyze
-    methods:
-      - POST
-    strip_path: false
-  
-  - name: health-route
-    service: inference-service
-    paths:
-      - /api/health
-    methods:
-      - GET
-    strip_path: false
-
-plugins:
-  - name: cors
-    config:
-      origins:
-        - "*"
-      methods:
-        - GET
-        - POST
-        - PUT
-        - DELETE
-        - OPTIONS
-      headers:
-        - Accept
-        - Authorization
-        - Content-Type
-      credentials: true
-      max_age: 3600
+  - name: inference-api-service
+    url: http://inference-service:8000 # Pointing to the inference service defined in docker-compose.yml
+    routes:
+      - name: inference-routes
+        paths:
+          - /api
+        strip_path: true  # Remove /api from the path before forwarding to the service
 EOF
 fi
 

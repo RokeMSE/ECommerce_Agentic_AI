@@ -9,6 +9,7 @@ import boto3
 from dotenv import load_dotenv
 from openai import OpenAI 
 from playwright.async_api import async_playwright
+import re
 
 
 @dataclass
@@ -159,7 +160,6 @@ HTML Sample:
 
     async def _extract_rating(self, element) -> Optional[float]:
         """Extract star rating or numerical score"""
-        import re
         text = await element.inner_text()
         patterns = [r'(\d+\.?\d*)\s*(?:out of|\/)\s*5', r'(\d+\.?\d*)\s*stars?']
         for pattern in patterns:

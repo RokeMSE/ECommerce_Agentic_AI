@@ -6,6 +6,10 @@ import seaborn as sns
 from PIL import Image, ImageFilter
 import torch
 import pandas as pd
+from synthesis_agent import AdversarialValidator
+from textblob import TextBlob
+import time
+import concurrent.futures
 
 class ComprehensiveEvaluator:
     """
@@ -307,9 +311,6 @@ class ComprehensiveEvaluator:
         """
         Evaluate quality of synthesized data using multiple criteria.
         """
-        
-        from textblob import TextBlob
-        
         metrics = {
             "linguistic_quality": [],
             "sentiment_consistency": [],
@@ -355,7 +356,6 @@ class ComprehensiveEvaluator:
         metrics["diversity"] = unique_ratio
         
         # 4. Discriminator score (from adversarial validator)
-        from synthesis_agent import AdversarialValidator
         validator = AdversarialValidator()
         
         validator.train_discriminator(
@@ -382,10 +382,6 @@ class ComprehensiveEvaluator:
         """
         Load testing and latency analysis.
         """
-        
-        import time
-        import concurrent.futures
-        
         latencies = []
         errors = 0
         

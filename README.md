@@ -1,228 +1,162 @@
-# An E-Commerce Agentic Multimodal Sentiment Analysis System
-An agentic AI system that synthesizes review text and images from public sources, and uses these data sources to train ML or LLM models for sentiment analysis.
+# E-Commerce Agentic Multimodal Sentiment Analysis System
+## About
+An end-to-end, production-ready agentic AI system for multimodal sentiment analysis. This system autonomously synthesizes review text and images, uses this data to train advanced Vision-Language Models, and provides a robust API for sentiment analysis and hybrid retrieval, effectively solving the "cold start" problem for niche e-commerce categories.
 
-An end-to-end, production-ready agentic AI system for multimodal sentiment analysis with autonomous data synthesis, hybrid retrieval, and continuous learning capabilities.
-
-## Table of Contents
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Key Features](#key-features)
-- [Technology Stack](#technology-stack)
-- [Quick Start](#quick-start)
-- [Repository Structure](#repository-structure)
-- [Detailed Documentation](#detailed-documentation)
-- [Evaluation Results](#evaluation-results)
-- [Contributing](#contributing)
+## Repository Structure
+```
+ecommerce_agentic_ai/
+├── agents/                  # Autonomous agents for scraping and synthesis
+│   ├── scraping_agent/      # Agent used for scraping reviews data from web
+│   └── synthetic_agent/     # Agent used for synthesizing review data
+├── backend/                 # Backend microservices
+│   ├── inference_service/   # FastAPI app for model inference
+│   └── training_service/    # Manages model training and evaluation
+├── frontend/                # Gradio user interface
+├── kong/                    # Kong API Gateway configuration
+├── scripts/           # Initialization scripts (like init_db for DB)
+├── models/            # Directory for storing model artifacts (mounted)
+├── data/              # Directory for local data storage (mounted to MinIO)
+├── docker-compose.yml # Main Docker Compose file for orchestration
+└── setup.sh           # Interactive setup script
+```
 
 ## Overview
-This system addresses the "cold start" problem in sentiment analysis for niche e-commerce categories by implementing:
+This system is designed to tackle the critical challenge of data scarcity in sentiment analysis. By deploying a set of intelligent, autonomous agents, it creates a self-improving MLOps lifecycle that covers everything from data acquisition to model deployment.
 
-1. **Autonomous Data Acquisition**: Intelligent web scraping agents that learn which sources provide high-quality data
-2. **Advanced Data Synthesis**: LLM and diffusion-based generation of realistic, domain-specific reviews and product images
-3. **Multimodal Understanding**: Fine-tuned Vision-Language Models (LLaVA) for joint text-image sentiment analysis
-4. **Hybrid Retrieval**: Combination of dense (CLIP) and sparse (BM25) retrieval with cross-encoder reranking
-5. **Self-Improving Pipeline**: Continuous learning with adversarial validation and quality monitoring
-
-## Architecture
-
-
+1. **Autonomous Data Acquisition**: An intelligent scraping agent uses an LLM to decide which web sources to target and dynamically discovers how to extract multimodal review data (text and images).
+2. **Advanced Data Synthesis**: A synthesis agent generates high-fidelity, domain-specific text and images, creating large, balanced datasets for training. The quality is ensured through an adversarial validation process.
+3. **Multimodal Understanding**: The system fine-tunes a Vision-Language Model (LLaVA) to jointly understand text and images, capturing nuanced sentiment that unimodal models would miss.
+4. **Hybrid Retrieval**: A hybrid retrieval system combines dense (semantic) and sparse (keyword) search with a cross-encoder reranker to find the most relevant similar reviews.
 
 ## Key Features
+- **LLM-Guided Scraping Strategy**: The scraping agent learns from past successes and failures to dynamically decide where to find the highest quality data.
+- **Controllable Synthetic Data**: Generate text and images with specific sentiment signals (e.g., a negative review paired with an image of a damaged product).
+- **Adversarial Validation**: A discriminator network ensures that synthetic data is indistinguishable from real data, guaranteeing high quality for training.
+- **Fine-Tuned Vision-Language Model**: Utilizes a fine-tuned LLaVA v1.6 model for superior contextual understanding of text and images together.
+- **Reciprocal Rank Fusion (RRF)**: Intelligently combines semantic search results from Qdrant (vectors) and keyword search results from Elasticsearch (BM25) for robust retrieval.
+- **End-to-End MLOps Automation**: Features an automated training pipeline with Prefect, experiment tracking with MLflow, and model versioning/deployment.
+- **Microservices Architecture**: Built with Docker for scalability, maintainability, and easy local setup.
 
-### 1. Intelligent Data Acquisition
-- **LLM-Guided Strategy**: Claude Sonnet decides which sources to scrape based on historical success rates
-- **Adaptive Selectors**: Automatically discovers CSS selectors for review extraction
-- **Multi-Protocol Support**: Scrapy for static sites, Playwright for JavaScript-heavy applications
-- **Deduplication**: Content-based hashing prevents duplicate reviews
+## System Architecture
+The system is a network of containerized microservices orchestrated by Docker Compose. This design separates concerns, allowing each component to be developed, deployed, and scaled independently.
 
-### 2. Advanced Data Synthesis
-- **Style-Transfer Text Generation**: Fine-tuned Llama 3.1 mimics domain-specific writing patterns
-- **Controllable Image Generation**: SDXL + ControlNet creates product images with sentiment-specific visual cues
-- **Adversarial Validation**: Discriminator network ensures synthetic data is indistinguishable from real data
-- **Quality Filtering**: Multi-stage validation with LLM-based quality assessment
-
-### 3. Multimodal Sentiment Analysis
-- **Vision-Language Model**: Fine-tuned LLaVA-v1.6 for joint text-image understanding
-- **Contextual Analysis**: Captures nuanced sentiment from text-image interactions
-- **Confidence Calibration**: Provides well-calibrated confidence scores
-
-### 4. Hybrid Retrieval System
-- **Dense Retrieval**: CLIP embeddings for semantic similarity
-- **Sparse Retrieval**: Elasticsearch BM25 for keyword matching
-- **Reciprocal Rank Fusion**: Combines dense and sparse results
-- **Cross-Encoder Reranking**: Final precision boost with ms-marco reranker
-- **Multi-Vector Search**: Separate text/image embeddings for fine-grained matching
-
-### 5. Production-Ready Infrastructure
-- **Microservices Architecture**: Independent, scalable services
-- **Comprehensive Monitoring**: Prometheus + Grafana dashboards
-- **CI/CD Pipeline**: GitHub Actions for automated testing and deployment
+### Core Services
+- **API Gateway (Kong)**: The single entry point for all API requests, handling routing, and security.
+- **Frontend (Gradio)**: A simple web UI for interacting with the sentiment analysis model.
+- **Inference Service**: A FastAPI backend that serves the sentiment analysis model and orchestrates the hybrid retrieval logic.
+- **Agent Services**: Separate containers for the `scraping-agent` and `synthetic-agent`.
+- **Training Service**: Manages the model training and evaluation lifecycle.
+- **Data Stores**:
+    + **PostgreSQL**: Stores structured data for MLflow and other application needs.
+    + **Qdrant**: A vector database for fast, efficient semantic search.
+    + **Elasticsearch**: Powers keyword-based sparse search.
+    + **Redis**: Caches frequent API responses to reduce latency.
+    + **MinIO**: An S3-compatible object store for ML artifacts and raw data.
 
 ## Technology Stack
+| Component            | Technology                                           |
+| -------------------- | ---------------------------------------------------- |
+| **AI/ML Frameworks** | PyTorch, Transformers, Diffusers                     |
+| **Backend Services** | FastAPI, Uvicorn                                     |
+| **Frontend** | Gradio                                               |
+| **Databases** | PostgreSQL, Qdrant, Elasticsearch, Redis           |
+| **Core Models** | LLaVA-v1.6, CLIP, BERT, SDXL                         |
+| **Web Scraping** | Playwright, Scrapy                                   |
+| **MLOps** | MLflow, Prefect, MinIO                               |
+| **Orchestration** | Docker, Docker Compose                               |
+| **API Gateway** | Kong                                                 |
 
-| Component | Technology |
-|-----------|-----------|
-| **Framework** | PyTorch, Transformers, Diffusers |
-| **Backend** | FastAPI, Prefect |
-| **Frontend** | Gradio, React (TypeScript) |
-| **Databases** | PostgreSQL+pgvector, Qdrant, Elasticsearch, Redis |
-| **ML/LLM** | LLaVA-v1.6, Llama 3.1, SDXL, CLIP |
-| **Orchestration** | Kubernetes (EKS), Docker |
-| **Cloud** | AWS (S3, SageMaker, EKS, RDS) |
-| **Monitoring** | Prometheus, Grafana, MLflow |
-
-## Quick Start
+## Getting Started
 
 ### Prerequisites
-- Docker & Docker Compose
-- NVIDIA GPU (for training and inference)
-- Python 3.10+
-- AWS Account (for cloud deployment)
+  - **Docker & Docker Compose**: Ensure Docker Desktop is installed and running.
+  - **NVIDIA GPU**: Recommended for training and inference services for optimal performance.
+  - **Git**: For cloning the repository.
 
-### Local Development
+### Local Development Setup
+1. **Clone the Repository**
+    ```bash
+    git clone https://github.com/rokemse/ecommerce_agentic_ai.git
+    cd ecommerce_agentic_ai
+    ```
+
+2. **Run the Setup Script**
+This script will create the necessary configuration files and a `.env` file for your secrets.
+    ```bash
+    chmod +x setup.sh
+    ./setup.sh
+    ```
+
+3. **Configure Environment Variables**
+The setup script will create a `.env` file. You **must** open it and add your `OPENAI_API_KEY`.
+    ```bash
+    nano .env
+    ```
+
+4. **Start the Services**
+The setup script will prompt you to choose a deployment option. For a first run, the "Minimal Demo" is recommended. The services will start automatically.
+To start them manually later:
+    ```bash
+    docker-compose up --build -d
+    ```
+
+5. **Access the System**
+Once the containers are running, you can access the various components:
+    - **Frontend UI**: `http://localhost:7860`
+    - **API Gateway**: `http://localhost:8000`
+    - **Inference API Docs**: `http://localhost:8080/docs`
+    - **MLflow UI**: `http://localhost:5000`
+    - **MinIO Console**: `http://localhost:9001` (Login with `minioadmin`/`minioadmin`)
+
+    *Note: The first time you run the `inference-service`, it may take a few minutes to download the CLIP model.*
+
+6.  **Stopping the System**
+    ```bash
+    docker-compose down
+    ```
+
+## Demo run:
+This is explicitly designed as a placeholder for the full, fine-tuned LLaVA model, which is too resource-intensive for a standard local deployment. 
+
+Here is how the classification works, as detailed in `backend/inference_service/main.py`: 
+- Predefined Keyword Lists: The system has hardcoded lists of positive and negative words.
+    + `Negative words: ['terrible', 'awful', 'bad', 'worst', 'hate', 'horrible', 'poor', 'disappointed', 'waste', 'broken']`
+    + `Positive words: ['excellent', 'amazing', 'great', 'best', 'love', 'wonderful', 'perfect', 'fantastic', 'awesome', 'exceeded']`
+- Keyword Counting: When a review text is submitted, the code converts the text to lowercase and counts how many words from the positive and negative lists
+appear in it.
+- Classification Logic: The final sentiment is determined by a simple comparison of the counts:
+    + If the count of positive words is greater than the count of negative words, the sentiment is classified as "positive".
+    + If the count of negative words is greater, it's classified as "negative".
+    + If the counts are equal (or both are zero), the sentiment is "neutral".
+
+## Running the full Agentic Pipelines
+After the infrastructure is running, you can execute the core agentic workflows. These commands should be run from within the respective service containers or configured to run as standalone scripts that connect to the Docker network.
+
+### 1. Data Ingestion
+To start the autonomous scraping process, run the scraping agent. This agent will use its LLM-guided strategy to find and extract reviews.
 
 ```bash
-# Clone repository
-git clone https://github.com/your-username/multimodal-sentiment-system.git
-cd multimodal-sentiment-system
-
-# Set environment variables
-cp .env.example .env
-# Edit .env with your API keys (Claude, HuggingFace, AWS)
-
-# Start all services
-docker-compose up -d
-
-# Access services
-# - Frontend: http://localhost:7860
-# - API Gateway: http://localhost:8000
-# - MLflow: http://localhost:5000
-# - Grafana: http://localhost:3000
+# Execute inside the running scraping_agent container
+docker-compose exec scraping-agent python openai_webscraping_agent.py
 ```
 
-### Run Training Pipeline
+### 2. Data Synthesis
+Once you have some initial data, run the synthesis agent to create a larger, balanced dataset.
 
 ```bash
-# Activate Python environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run data ingestion
-python agents/ingestion_agent/run.py --config configs/scraping_config.yaml
-
-# Run data synthesis
-python agents/synthesis_agent/run.py --target-size 10000
-
-# Train sentiment model
-python backend/training_service/train.py --config configs/training_config.yaml
+# Execute inside the running synthetic_agent container
+docker-compose exec synthetic-agent python controllable_synthetic_agent.py
 ```
 
-## 📁 Repository Structure
+### 3. Model Training
+With a complete dataset, you can then execute the automated training pipeline.
 
-```
-multimodal-sentiment-system/
-├── backend/
-│   ├── inference_service/
-│   │   ├── main.py              # FastAPI application
-│   │   ├── models.py            # Pydantic models
-│   │   ├── model_manager.py     # Model loading and inference
-│   │   └── Dockerfile
-│   ├── training_service/
-│   │   ├── train.py             # Training orchestration
-│   │   ├── dataset.py           # Custom PyTorch datasets
-│   │   ├── evaluation.py        # Evaluation metrics
-│   │   └── Dockerfile
-│   └── api_gateway/
-│       └── kong.yml             # Kong configuration
-├── agents/
-│   ├── ingestion_agent/
-│   │   ├── scraper.py           # Intelligent web scraping
-│   │   ├── strategy_memory.py   # Learning from past scrapes
-│   │   └── Dockerfile
-│   ├── synthesis_agent/
-│   │   ├── text_synthesizer.py  # LLM-based text generation
-│   │   ├── image_synthesizer.py # Diffusion-based image generation
-│   │   ├── validator.py         # Adversarial validation
-│   │   └── Dockerfile
-│   ├── labeling_agent/
-│   │   ├── zero_shot_labeler.py # LLM-based labeling
-│   │   ├── active_learning.py   # Uncertainty sampling
-│   │   └── Dockerfile
-│   └── control_agent/
-│       ├── orchestrator.py      # Prefect workflows
-│       └── Dockerfile
-├── frontend/
-│   ├── gradio_app/
-│   │   ├── app.py               # Gradio interface
-│   │   └── Dockerfile
-│   └── react_app/               # Optional React frontend
-│       ├── src/
-│       └── Dockerfile
-├── infra/
-│   ├── docker-compose.yml       # Local development
-│   ├── k8s/                     # Kubernetes manifests
-│   │   ├── deployments/
-│   │   ├── services/
-│   │   ├── configmaps/
-│   │   └── ingress.yaml
-│   ├── terraform/               # Infrastructure as Code
-│   └── monitoring/
-│       ├── prometheus.yml
-│       └── grafana/
-├── scripts/
-│   ├── init_database.py
-│   ├── seed_data.py
-│   └── deploy.sh
-├── notebooks/
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_model_experiments.ipynb
-│   └── 03_evaluation_analysis.ipynb
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-├── docs/
-│   ├── ARCHITECTURE.md          # Detailed architecture
-│   ├── API.md                   # API documentation
-│   ├── DEPLOYMENT.md            # Deployment guide
-│   └── EVALUATION.md            # Evaluation methodology
-├── configs/
-│   ├── scraping_config.yaml
-│   ├── synthesis_config.yaml
-│   └── training_config.yaml
-├── .github/
-│   └── workflows/
-│       ├── ci.yml               # Continuous Integration
-│       └── cd.yml               # Continuous Deployment
-├── requirements.txt
-├── setup.py
-├── README.md
-└── LICENSE
+```bash
+# Execute inside the running training_service container
+docker-compose exec training-service python distributed_training.py
 ```
 
-## 📚 Detailed Documentation
+> **This will fine-tune the LLaVA model, evaluate it, and register the new version in MLflow if it meets the performance criteria.**
 
-### Architecture & Design
-- [System Architecture](docs/ARCHITECTURE.md) - Comprehensive system design
-- [Microservices Overview](docs/MICROSERVICES.md) - Detailed service descriptions
-- [Data Flow](docs/DATA_FLOW.md) - End-to-end data pipeline
-
-### API Documentation
-- [REST API Reference](docs/API.md) - Complete API documentation
-- [WebSocket Events](docs/WEBSOCKETS.md) - Real-time event streaming
-
-### Deployment Guides
-- [Local Development](docs/LOCAL_SETUP.md) - Development environment setup
-- [Kubernetes Deployment](docs/DEPLOYMENT.md) - Production deployment on K8s
-- [AWS Setup](docs/AWS_SETUP.md) - AWS infrastructure configuration
-
-### Model Training
-- [Training Pipeline](docs/TRAINING.md) - Model training workflow
-- [Hyperparameter Tuning](docs/HYPERPARAMETERS.md) - Optimization strategies
-- [Model Registry](docs/MODEL_REGISTRY.md) - Version management
-
-### Evaluation
-- [Evaluation Framework](docs/EVALUATION.md) -
+## Contributing
+Contributions are welcome\! Please feel free to submit a pull request or open an issue for any bugs, feature requests, or improvements.

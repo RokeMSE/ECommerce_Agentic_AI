@@ -7,4 +7,4 @@ services:
       - name: inference-routes
         paths:
           - /api
-        strip_path: true
+        strip_path: true  # Remove /api from the path before forwarding to the service

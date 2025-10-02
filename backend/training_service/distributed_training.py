@@ -3,12 +3,17 @@ from prefect.tasks import task_input_hash
 from datetime import timedelta
 import torch
 from torch.utils.data import Dataset, DataLoader
+import mlflow
+import mlflow.pytorch
 from transformers import AutoProcessor, LlavaForConditionalGeneration
 from transformers import Trainer, TrainingArguments
-import mlflow
+from sklearn.metrics import classification_report, confusion_matrix
+import numpy as np
 from typing import Dict, List
 import json
 import boto3
+import kubernetes
+from kubernetes import client, config
 
 class MultimodalDataset(Dataset):
     """Custom dataset for multimodal review data"""
@@ -139,11 +144,7 @@ def train_sentiment_model(
 def evaluate_model(model_path: str, test_data_path: str) -> Dict:
     """
     Comprehensive model evaluation with multiple metrics.
-    """
-    
-    from sklearn.metrics import classification_report, confusion_matrix
-    import numpy as np
-    
+    """    
     # Load model
     model = LlavaForConditionalGeneration.from_pretrained(model_path)
     processor = AutoProcessor.from_pretrained(model_path)
@@ -252,9 +253,6 @@ def deploy_model_to_registry(model_path: str, metrics: Dict) -> str:
     """
     Register model in MLflow Model Registry with metadata.
     """
-    
-    import mlflow.pytorch
-    
     # Register model
     model_uri = f"runs:/{mlflow.active_run().info.run_id}/model"
     
@@ -336,10 +334,6 @@ def trigger_inference_deployment(model_version: str):
     Update inference service to use new model version.
     Uses blue-green deployment strategy.
     """
-    
-    import kubernetes
-    from kubernetes import client, config
-    
     # Load Kubernetes config
     config.load_incluster_config()
     
