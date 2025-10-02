@@ -80,10 +80,8 @@ def train_sentiment_model(
     """
     Fine-tune LLaVA model for sentiment analysis using DeepSpeed.
     """
-    
     # Initialize MLflow tracking
     mlflow.set_experiment("multimodal-sentiment")
-    
     with mlflow.start_run():
         # Log parameters
         mlflow.log_params(config)
@@ -101,7 +99,6 @@ def train_sentiment_model(
         
         # Prepare dataset
         dataset = MultimodalDataset(data_path, processor)
-        
         # Training arguments with DeepSpeed
         training_args = TrainingArguments(
             output_dir="./results",
@@ -128,16 +125,13 @@ def train_sentiment_model(
             eval_dataset=dataset,  # Should be separate eval set
         )
         
-        # Train
         trainer.train()
-        
         # Save model
         model_path = f"./models/sentiment_vlm_{mlflow.active_run().info.run_id}"
         trainer.save_model(model_path)
         
         # Log model to MLflow
         mlflow.log_artifacts(model_path)
-        
         return model_path
 
 @task
@@ -156,7 +150,6 @@ def evaluate_model(model_path: str, test_data_path: str) -> Dict:
     predictions = []
     ground_truth = []
     confidences = []
-    
     model.eval()
     with torch.no_grad():
         for item in test_data:
@@ -184,7 +177,6 @@ def evaluate_model(model_path: str, test_data_path: str) -> Dict:
     )
     
     cm = confusion_matrix(ground_truth, predictions)
-    
     metrics = {
         "accuracy": report['accuracy'],
         "precision_macro": report['macro avg']['precision'],
@@ -204,7 +196,6 @@ def evaluate_model(model_path: str, test_data_path: str) -> Dict:
     
     # Log to MLflow
     mlflow.log_metrics(metrics)
-    
     return metrics
 
 @task
@@ -212,27 +203,21 @@ def adversarial_robustness_test(model_path: str) -> Dict:
     """
     Test model robustness against adversarial inputs.
     """
-    
     test_cases = [
         # Typos and misspellings
         {"text": "Thiss produkt is amzing!", "expected": "positive"},
-        
         # Sarcasm
         {"text": "Oh great, another broken product. Just what I needed.", "expected": "negative"},
-        
         # Mixed sentiment
         {"text": "The quality is good but shipping was terrible.", "expected": "neutral"},
-        
         # Low-quality images (blur, noise)
         {"image_augmentation": "gaussian_blur", "expected_degradation": 0.1},
-        
         # Out-of-distribution
         {"text": "This review is about politics, not products.", "expected": "ood_detection"}
     ]
     
     model = LlavaForConditionalGeneration.from_pretrained(model_path)
     processor = AutoProcessor.from_pretrained(model_path)
-    
     robustness_scores = {
         "typo_handling": 0.0,
         "sarcasm_detection": 0.0,
@@ -285,22 +270,19 @@ def training_pipeline(config: Dict):
     """
     Main orchestration flow for the entire training pipeline.
     """
-    
-    print("Starting Training Pipeline")
-    
-    # Step 1: Fetch and prepare data
+    # Fetch and prepare data
     data_path = fetch_labeled_data(
         s3_bucket=config['s3_bucket'],
         min_quality=config.get('min_quality', 0.75)
     )
     
-    # Step 2: Train model
+    # Train
     model_path = train_sentiment_model(
         data_path=data_path,
         config=config
     )
     
-    # Step 3: Evaluate on test set
+    # Evaluate on test set
     metrics = evaluate_model(
         model_path=model_path,
         test_data_path=config['test_data_path']
@@ -308,15 +290,14 @@ def training_pipeline(config: Dict):
     
     print(f"Evaluation Metrics: {json.dumps(metrics, indent=2)}")
     
-    # Step 4: Robustness testing
+    # Robust testing
     robustness = adversarial_robustness_test(model_path)
     print(f"Robustness Scores: {json.dumps(robustness, indent=2)}")
     
-    # Step 5: Deploy to registry
+    # Deploy to registry
     if metrics['f1_macro'] > config.get('deployment_threshold', 0.80):
         version = deploy_model_to_registry(model_path, metrics)
-        print(f"Model deployed to registry: version {version}")
-        
+        print(f"Model deployed to registry: version {version}")  
         # Trigger deployment to inference service
         trigger_inference_deployment(version)
     else:
@@ -339,7 +320,6 @@ def trigger_inference_deployment(model_version: str):
     
     # Update deployment with new model version
     apps_v1 = client.AppsV1Api()
-    
     deployment = apps_v1.read_namespaced_deployment(
         name="inference-service",
         namespace="production"
@@ -418,6 +398,4 @@ if __name__ == "__main__":
         "min_quality": 0.75,
         "deployment_threshold": 0.82
     }
-    
-    # Run training pipeline
     result = training_pipeline(config)

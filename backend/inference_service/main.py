@@ -88,18 +88,18 @@ class ModelManager:
         try:
             # Simple rule-based sentiment for demo
             text_lower = text.lower()
-            
+
             # Negative keywords
             negative_words = ['terrible', 'awful', 'bad', 'worst', 'hate', 
                             'horrible', 'poor', 'disappointed', 'waste', 'broken']
             # Positive keywords
             positive_words = ['excellent', 'amazing', 'great', 'best', 'love',
                             'wonderful', 'perfect', 'fantastic', 'awesome', 'exceeded']
-            
-            neg_count = sum(1 for word in negative_words if word in text_lower)
+            neg_count = sum(1 for word in negative_words if word in text_lower) 
             pos_count = sum(1 for word in positive_words if word in text_lower)
             
             # Base prediction on text
+            # WHichever has more occurance -> more weight -> more confidence
             if pos_count > neg_count:
                 sentiment = "positive"
                 confidence = 0.7 + (pos_count * 0.05) 
@@ -117,10 +117,8 @@ class ModelManager:
                 # Get image embedding and adjust confidence
                 image_input = self.clip_preprocess(image).unsqueeze(0).to(self.device)
                 image_features = self.clip_model.encode_image(image_input)
-                
-                # Simple heuristic: increase confidence for multimodal
+                # Increase confidence for multimodal
                 confidence = min(0.95, confidence + 0.1)
-            
             confidence = min(0.99, confidence)
             
             return {

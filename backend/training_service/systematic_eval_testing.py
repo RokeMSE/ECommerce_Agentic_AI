@@ -24,11 +24,9 @@ class ComprehensiveEvaluator:
         
     def evaluate_sentiment_performance(self) -> Dict:
         """Standard classification metrics"""
-        
         predictions = []
         ground_truth = []
         confidences = []
-        
         for item in self.test_data:
             pred, conf = self._predict(item['text'], item.get('image'))
             predictions.append(pred)
@@ -68,7 +66,6 @@ class ComprehensiveEvaluator:
         """
         Quantify the benefit of multimodal vs. unimodal analysis.
         """
-        
         results = {
             "text_only": [],
             "image_only": [],
@@ -77,20 +74,17 @@ class ComprehensiveEvaluator:
         
         for item in self.test_data:
             if not item.get('image'):
-                continue
-            
+                continue 
             # Text only
             pred_text, _ = self._predict(item['text'], None)
             results["text_only"].append(
                 pred_text == item['sentiment']
             )
-            
             # Image only (using empty text)
             pred_image, _ = self._predict("", item['image'])
             results["image_only"].append(
                 pred_image == item['sentiment']
             )
-            
             # Multimodal
             pred_multi, _ = self._predict(item['text'], item['image'])
             results["multimodal"].append(
@@ -110,7 +104,6 @@ class ComprehensiveEvaluator:
         """
         Test robustness against various adversarial perturbations.
         """
-        
         robustness_scores = {
             "character_level": self._test_character_perturbations(),
             "word_level": self._test_word_perturbations(),
@@ -123,18 +116,14 @@ class ComprehensiveEvaluator:
     
     def _test_character_perturbations(self) -> float:
         """Test against typos, character swaps"""
-        
         correct_count = 0
         total = 0
-        
         for item in self.test_data[:50]:  # Sample subset
             original_pred, _ = self._predict(item['text'], item.get('image'))
-            
             # Apply perturbations
             perturbed = self._add_typos(item['text'])
             perturbed_pred, _ = self._predict(perturbed, item.get('image'))
-            
-            # Model should maintain same prediction
+            # ***************Should maintain same prediction
             if original_pred == perturbed_pred:
                 correct_count += 1
             total += 1
@@ -143,42 +132,33 @@ class ComprehensiveEvaluator:
     
     def _test_word_perturbations(self) -> float:
         """Test against synonym replacement, word deletion"""
-        
         correct_count = 0
         total = 0
-        
         for item in self.test_data[:50]:
             original_pred, _ = self._predict(item['text'], item.get('image'))
-            
-            # Remove random words (20% dropout)
+            # Remove random words
             words = item['text'].split()
-            keep_mask = np.random.rand(len(words)) > 0.2
+            keep_mask = np.random.rand(len(words)) > 0.2 # 20% deletion
             perturbed = ' '.join([w for w, keep in zip(words, keep_mask) if keep])
-            
             if not perturbed.strip():
                 continue
             
             perturbed_pred, _ = self._predict(perturbed, item.get('image'))
-            
             if original_pred == perturbed_pred:
                 correct_count += 1
             total += 1
-        
         return correct_count / total if total > 0 else 0.0
     
     def _test_image_perturbations(self) -> float:
         """Test against Gaussian noise, blur, brightness changes"""
-        
         if not any(item.get('image') for item in self.test_data):
             return 0.0
         
         correct_count = 0
         total = 0
-        
         for item in self.test_data[:50]:
             if not item.get('image'):
                 continue
-            
             original_pred, _ = self._predict(item['text'], item['image'])
             
             # Add Gaussian noise
@@ -186,7 +166,6 @@ class ComprehensiveEvaluator:
             noise = np.random.normal(0, 25, image_array.shape)
             noisy_image = np.clip(image_array + noise, 0, 255).astype(np.uint8)
             noisy_pil = Image.fromarray(noisy_image)
-            
             noisy_pred, _ = self._predict(item['text'], noisy_pil)
             
             if original_pred == noisy_pred:
@@ -197,14 +176,11 @@ class ComprehensiveEvaluator:
     
     def _test_image_occlusion(self) -> float:
         """Test with partially occluded images"""
-        
         correct_count = 0
         total = 0
-        
         for item in self.test_data[:50]:
             if not item.get('image'):
                 continue
-            
             original_pred, _ = self._predict(item['text'], item['image'])
             
             # Occlude 25% of image
@@ -216,7 +192,6 @@ class ComprehensiveEvaluator:
             
             occluded_pil = Image.fromarray(image_array)
             occluded_pred, _ = self._predict(item['text'], occluded_pil)
-            
             if original_pred == occluded_pred:
                 correct_count += 1
             total += 1
@@ -228,8 +203,7 @@ class ComprehensiveEvaluator:
         Test on reviews with conflicting sentiment signals.
         E.g., positive text with image of damaged product.
         """
-        
-        # This requires specially crafted test cases
+        # Specially crafted test cases
         mixed_test_cases = [
             {
                 "text": "This product is amazing!",
@@ -254,26 +228,20 @@ class ComprehensiveEvaluator:
         """
         Evaluate retrieval system using Precision@K, Recall@K, MAP.
         """
-        
         # Create ground truth similar pairs
         ground_truth = self._create_similarity_ground_truth()
-        
         results = {}
-        
         for k in k_values:
             precisions = []
             recalls = []
             aps = []  # Average Precision
-            
             for query_id, relevant_ids in ground_truth.items():
                 query_item = self._get_item_by_id(query_id)
-                
                 # Get embeddings
                 query_embedding = self._get_embedding(
                     query_item['text'],
                     query_item.get('image')
                 )
-                
                 # Retrieve similar items
                 retrieved = retrieval_system.dense_search(
                     query_embedding,
@@ -283,10 +251,8 @@ class ComprehensiveEvaluator:
                 
                 # Calculate metrics
                 relevant_retrieved = set(retrieved_ids) & set(relevant_ids)
-                
                 precision = len(relevant_retrieved) / k
                 recall = len(relevant_retrieved) / len(relevant_ids)
-                
                 precisions.append(precision)
                 recalls.append(recall)
                 
@@ -321,8 +287,7 @@ class ComprehensiveEvaluator:
         # 1. Linguistic quality (grammar, coherence)
         for item in synthetic_data:
             blob = TextBlob(item['text'])
-            
-            # Simple grammar check via sentiment polarity variance
+            # Check with sentiment polarity variance
             sentences = blob.sentences
             if len(sentences) > 1:
                 polarities = [s.sentiment.polarity for s in sentences]
@@ -333,7 +298,6 @@ class ComprehensiveEvaluator:
         for item in synthetic_data:
             blob = TextBlob(item['text'])
             text_polarity = blob.sentiment.polarity
-            
             label = item['sentiment']
             
             # Check if polarity matches label
@@ -351,13 +315,11 @@ class ComprehensiveEvaluator:
         for item in synthetic_data:
             words = item['text'].lower().split()
             all_words.extend(words)
-        
         unique_ratio = len(set(all_words)) / len(all_words)
         metrics["diversity"] = unique_ratio
         
         # 4. Discriminator score (from adversarial validator)
         validator = AdversarialValidator()
-        
         validator.train_discriminator(
             real_reviews=[item['text'] for item in real_data],
             synthetic_reviews=[item['text'] for item in synthetic_data]
@@ -384,7 +346,6 @@ class ComprehensiveEvaluator:
         """
         latencies = []
         errors = 0
-        
         def make_request():
             start = time.time()
             try:
@@ -404,7 +365,6 @@ class ComprehensiveEvaluator:
                 executor.submit(make_request)
                 for _ in range(num_requests)
             ]
-            
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
                 if result is not None:
@@ -429,13 +389,11 @@ class ComprehensiveEvaluator:
         """
         Generate comprehensive HTML report with visualizations.
         """
-        
-        # Run all evaluations
         sentiment_metrics = self.evaluate_sentiment_performance()
         multimodal_metrics = self.evaluate_multimodal_contribution()
         robustness_metrics = self.evaluate_adversarial_robustness()
         
-        # Generate visualizations
+        # Visualize
         self._plot_confusion_matrix(
             sentiment_metrics['confusion_matrix'],
             save_path="confusion_matrix.png"
@@ -539,14 +497,11 @@ class ComprehensiveEvaluator:
         </body>
         </html>
         """
-        
         with open(output_path, 'w') as f:
-            f.write(html_template)
-        
+            f.write(html_template)  
         return output_path
     
-    # Helper methods
-    
+    # HELPER FUCNS
     def _predict(self, text: str, image=None) -> Tuple[str, float]:
         """Make prediction with model"""
         # Implementation would use actual model

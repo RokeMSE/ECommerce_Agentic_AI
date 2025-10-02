@@ -13,7 +13,6 @@ class HybridRetrievalSystem:
     2. Sparse retrieval (BM25 in Elasticsearch)
     3. Cross-encoder reranking for final precision
     """
-    
     def __init__(self, config: Dict):
         # Qdrant for dense vector search
         self.qdrant = QdrantClient(
@@ -227,7 +226,7 @@ class HybridRetrievalSystem:
                     'fusion_score': score
                 })
         
-        # Optional: Rerank with cross-encoder
+        # Rerank with cross-encoder
         if use_reranking and len(candidates) > 0:
             candidates = self._rerank(query_text, candidates, k)
         
