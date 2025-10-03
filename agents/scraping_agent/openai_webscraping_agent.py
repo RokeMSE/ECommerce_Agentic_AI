@@ -58,6 +58,24 @@ class IntelligentScrapingAgent:
                 "failed_sites": {},
                 "optimal_selectors": {}
             }
+        
+    def _update_successful_sites(self, url: str, selectors_used: List[str]):
+        """Update strategy memory with successful attempts."""
+        domain = url.split('/')[2]
+        if domain not in self.strategy_memory['successful_sites']:
+            self.strategy_memory['successful_sites'][domain] = {
+                "success_count": 0,
+                "last_success": None,
+                "selectors": {}
+            }
+        
+        self.strategy_memory['successful_sites'][domain]['success_count'] += 1
+        self.strategy_memory['successful_sites'][domain]['last_success'] = datetime.now().isoformat()
+        for selector in selectors_used:
+            self.strategy_memory['successful_sites'][domain]['selectors'][selector] = \
+                self.strategy_memory['successful_sites'][domain]['selectors'].get(selector, 0) + 1
+
+        self._persist_strategy_memory()
 
     async def decide_next_action(self, current_state: Dict) -> Dict:
         """
@@ -91,11 +109,7 @@ Provide your decision in a JSON object format.
         decision = json.loads(response.choices[0].message.content)
         return decision
 
-    async def scrape_with_playwright(
-        self,
-        url: str,
-        product_keywords: List[str]
-    ) -> List[ReviewData]:
+    async def scrape_with_playwright(self, url: str, product_keywords: List[str]) -> List[ReviewData]:
         """
         Use Playwright for JavaScript-heavy sites.
         Dynamically adapts to site structure.
@@ -126,6 +140,9 @@ Provide your decision in a JSON object format.
                             timestamp=datetime.now(),
                             metadata={"selector": selector}
                         ))
+                # If reviews were found, update the success memory
+                if reviews:
+                    self._update_successful_sites(url, selectors)
             except Exception as e:
                 print(f"Scraping error on {url}: {e}")
                 self._update_failed_sites(url, str(e))

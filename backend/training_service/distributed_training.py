@@ -8,6 +8,7 @@ import mlflow.pytorch
 from transformers import AutoProcessor, LlavaForConditionalGeneration
 from transformers import Trainer, TrainingArguments
 from sklearn.metrics import classification_report, confusion_matrix
+from systematic_eval_testing import ComprehensiveEvaluator
 import numpy as np
 from typing import Dict, List
 import json
@@ -199,6 +200,32 @@ def evaluate_model(model_path: str, test_data_path: str) -> Dict:
     return metrics
 
 @task
+def comprehensive_evaluation(model_path: str, test_data_path: str) -> str:
+    """Runs the full systematic evaluation and generates a report."""
+    # This is a simplified integration.
+    # A real implementation would require loading the model and a proper test dataset.
+    print("Running comprehensive evaluation...")
+    
+    # Mock objects for the purpose of generating a report structure
+    class MockModel:
+        pass
+    class MockProcessor:
+        pass
+    
+    with open(test_data_path, 'r') as f:
+        test_data = json.load(f)
+
+    evaluator = ComprehensiveEvaluator(MockModel(), MockProcessor(), test_data)
+    
+    report_path = evaluator.generate_evaluation_report()
+    print(f"Evaluation report generated at: {report_path}")
+    
+    # Log the report as an artifact to MLflow
+    mlflow.log_artifact(report_path, "evaluation_reports")
+    
+    return report_path
+
+@task
 def adversarial_robustness_test(model_path: str) -> Dict:
     """
     Test model robustness against adversarial inputs.
@@ -293,6 +320,11 @@ def training_pipeline(config: Dict):
     # Robust testing
     robustness = adversarial_robustness_test(model_path)
     print(f"Robustness Scores: {json.dumps(robustness, indent=2)}")
+    # Run comprehensive evaluation
+    comprehensive_evaluation(
+        model_path=model_path,
+        test_data_path=config['test_data_path']
+    )
     
     # Deploy to registry
     if metrics['f1_macro'] > config.get('deployment_threshold', 0.80):

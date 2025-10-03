@@ -12,6 +12,8 @@ import hashlib
 import json
 import time
 import logging
+import os
+from hybrid_dense_parse_retrieval_approach import HybridRetrievalSystem 
 from prometheus_client import Counter, Histogram, generate_latest
 from fastapi.responses import Response
 
@@ -44,6 +46,9 @@ class ModelManager:
         # Initialize models
         self._load_models()
         
+        # Initialize retrieval system
+        self._initialize_retrieval()
+
         # Initialize cache
         try:
             self.cache = Redis(host='redis', port=6379, db=0, decode_responses=True)
@@ -56,9 +61,9 @@ class ModelManager:
     def _load_models(self):
         """Load all required models"""
         try:
-            # Load CLIP for embeddings
+            # Load CLIP for embeddings - Use ViT-L/14 for 768-dim vectors
             logger.info("Loading CLIP model...")
-            self.clip_model, self.clip_preprocess = clip.load("ViT-B/32", device=self.device)
+            self.clip_model, self.clip_preprocess = clip.load("ViT-L/14", device=self.device)
             logger.info("CLIP model loaded successfully")
             
             # NOTE: In production, this would be the fine-tuned LLaVA model (cause the model is too big for local deployment)
@@ -68,6 +73,22 @@ class ModelManager:
             logger.error(f"Error loading models: {e}")
             raise
     
+    def _initialize_retrieval(self):
+        """Initialize the Hybrid Retrieval System"""
+        try:
+            retrieval_config = {
+                'qdrant_host': os.getenv("QDRANT_HOST", "qdrant"),
+                'qdrant_port': int(os.getenv("QDRANT_PORT", 6333)),
+                'elasticsearch_url': os.getenv("ELASTICSEARCH_URL", "http://elasticsearch:9200"),
+                'es_user': os.getenv("ELASTICSEARCH_USER"),
+                'es_password': os.getenv("ELASTICSEARCH_PASSWORD")
+            }
+            self.retrieval_system = HybridRetrievalSystem(config=retrieval_config)
+            logger.info("Hybrid Retrieval System initialized successfully")
+        except Exception as e:
+            logger.error(f"Error initializing retrieval system: {e}")
+            self.retrieval_system = None
+
     def get_cache_key(self, text: str, image_hash: Optional[str]) -> str:
         """Generate cache key for request"""
         key_str = f"{text}_{image_hash if image_hash else 'no_image'}"
@@ -240,12 +261,20 @@ async def analyze_review(
         # Perform analysis
         sentiment_result = model_manager.analyze_sentiment(text, pil_image)
         
-        # Get embeddings for similarity search
+                # Get embeddings for similarity search
         embeddings = model_manager.get_embeddings(text, pil_image)
-        
-        # TODO: Integrate with hybrid retrieval system for similar reviews
+
+        # Use the retrieval system to find similar reviews
         similar_reviews = []
-        
+        if model_manager.retrieval_system:
+            try:
+                similar_reviews = model_manager.retrieval_system.hybrid_search(
+                    query_text=text,
+                    query_embedding=embeddings,
+                    k=5 # Return top 5 similar reviews
+                )
+            except Exception as e:
+                logger.warning(f"Hybrid search failed: {e}")
         processing_time = (time.time() - start_time) * 1000
         
         response_data = {
