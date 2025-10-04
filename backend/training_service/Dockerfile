@@ -10,4 +10,5 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
-CMD ["python", "distributed_training.py"]
+# This command keeps the container running for testing purposes
+CMD ["python", "-c", "print('Training service ready...'); import time; time.sleep(float('inf'))"] 

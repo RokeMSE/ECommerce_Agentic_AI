@@ -6,7 +6,7 @@ import seaborn as sns
 from PIL import Image, ImageFilter
 import torch
 import pandas as pd
-from synthesis_agent import AdversarialValidator
+from agents.synthetic_agent.controllable_synthetic_agent import AdversarialValidator
 from textblob import TextBlob
 import time
 import concurrent.futures

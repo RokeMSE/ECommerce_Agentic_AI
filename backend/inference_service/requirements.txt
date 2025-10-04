@@ -10,5 +10,8 @@ Pillow
 numpy
 prometheus-client
 python-multipart # For handling file uploads
+qdrant-client
+elasticsearch  
+sentence-transformers
 # For CLIP model
 git+https://github.com/openai/CLIP.git

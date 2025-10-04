@@ -10,3 +10,6 @@ seaborn
 pandas
 textblob
 kubernetes
+sentence-transformers
+deepspeed
+accelerate
