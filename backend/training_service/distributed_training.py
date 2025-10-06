@@ -46,32 +46,42 @@ class MultimodalDataset(Dataset):
         
         return inputs
 
+# @task(cache_key_fn=task_input_hash, cache_expiration=timedelta(hours=1))
+# def fetch_labeled_data(s3_bucket: str, min_quality: float = 0.75) -> str:
+#     """
+#     Fetch labeled data from S3 that meets quality threshold.
+#     """
+#     s3 = boto3.client('s3')
+    
+#     # List all labeled data
+#     response = s3.list_objects_v2(Bucket=s3_bucket, Prefix='labeled/')
+    
+#     high_quality_data = []
+    
+#     for obj in response.get('Contents', []):
+#         data = s3.get_object(Bucket=s3_bucket, Key=obj['Key'])
+#         review = json.loads(data['Body'].read())
+        
+#         if review.get('quality_score', 0) >= min_quality:
+#             high_quality_data.append(review)
+    
+#     # Save consolidated dataset
+#     output_path = '/tmp/training_data.json'
+#     with open(output_path, 'w') as f:
+#         json.dump(high_quality_data, f)
+    
+#     print(f"Fetched {len(high_quality_data)} high-quality reviews")
+#     return output_path
+
 @task(cache_key_fn=task_input_hash, cache_expiration=timedelta(hours=1))
 def fetch_labeled_data(s3_bucket: str, min_quality: float = 0.75) -> str:
     """
-    Fetch labeled data from S3 that meets quality threshold.
+    Fetch labeled data from a local mock file for testing.
     """
-    s3 = boto3.client('s3')
-    
-    # List all labeled data
-    response = s3.list_objects_v2(Bucket=s3_bucket, Prefix='labeled/')
-    
-    high_quality_data = []
-    
-    for obj in response.get('Contents', []):
-        data = s3.get_object(Bucket=s3_bucket, Key=obj['Key'])
-        review = json.loads(data['Body'].read())
-        
-        if review.get('quality_score', 0) >= min_quality:
-            high_quality_data.append(review)
-    
-    # Save consolidated dataset
-    output_path = '/tmp/training_data.json'
-    with open(output_path, 'w') as f:
-        json.dump(high_quality_data, f)
-    
-    print(f"Fetched {len(high_quality_data)} high-quality reviews")
-    return output_path
+    # Path inside the container where the data volume is mounted
+    mock_data_path = '/data/test_set.json'
+    print(f"Bypassing S3 fetch. Using mock data from: {mock_data_path}")
+    return mock_data_path
 
 @task
 def train_sentiment_model(

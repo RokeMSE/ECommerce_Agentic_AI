@@ -1,12 +1,27 @@
 [
-    {
-        "text": "This is a positive test review.",
-        "image_path": "path/to/image1.jpg",
-        "sentiment": "positive"
-    },
-    {
-        "text": "This is a negative test review.",
-        "image_path": "path/to/image2.jpg",
-        "sentiment": "negative"
-    }
+  {
+    "text": "Absolutely love this! It's even better than I expected.",
+    "image_path": "images/mock_image_1.jpg",
+    "sentiment": "positive"
+  },
+  {
+    "text": "The product arrived broken and the customer service was unhelpful.",
+    "image_path": "images/mock_image_2.jpg",
+    "sentiment": "negative"
+  },
+  {
+    "text": "It's a decent product for the price. Not amazing, but it gets the job done.",
+    "image_path": "images/mock_image_3.jpg",
+    "sentiment": "neutral"
+  },
+  {
+    "text": "I've had this for a month now and it's holding up great. Highly recommend!",
+    "image_path": "images/mock_image_4.jpg",
+    "sentiment": "positive"
+  },
+  {
+    "text": "A complete waste of money. I wish I could return it.",
+    "image_path": "images/mock_image_5.jpg",
+    "sentiment": "negative"
+  }
 ]

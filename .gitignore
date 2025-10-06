@@ -1,3 +1,4 @@
 /Lib
 .env
 pyvenv.cfg
+/data/.minio.sys
